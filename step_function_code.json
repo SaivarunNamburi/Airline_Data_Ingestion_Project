@@ -1,0 +1,83 @@
+{
+  "Comment": "A description of my state machine",
+  "StartAt": "StartCrawler",
+  "States": {
+    "StartCrawler": {
+      "Type": "Task",
+      "Parameters": {
+        "Name": "flights-data-crawler"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:glue:startCrawler",
+      "Next": "GetCrawler"
+    },
+    "GetCrawler": {
+      "Type": "Task",
+      "Parameters": {
+        "Name": "flights-data-crawler"
+      },
+      "Resource": "arn:aws:states:::aws-sdk:glue:getCrawler",
+      "Next": "Is_Running?"
+    },
+    "Is_Running?": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.Crawler.State",
+          "StringMatches": "RUNNING",
+          "Next": "Wait"
+        }
+      ],
+      "Default": "Glue StartJobRun"
+    },
+    "Wait": {
+      "Type": "Wait",
+      "Seconds": 5,
+      "Next": "GetCrawler"
+    },
+    "Glue StartJobRun": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "airline_data_ingestion"
+      },
+      "Next": "Glue_Job_Status",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.TaskFailed"
+          ],
+          "Next": "Failed_Notification"
+        }
+      ]
+    },
+    "Glue_Job_Status": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Variable": "$.JobRunState",
+          "StringMatches": "SUCCEEDED",
+          "Next": "Success_Notification"
+        }
+      ],
+      "Default": "Failed_Notification"
+    },
+    "Success_Notification": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "TopicArn": "arn:aws:sns:us-east-1:xxxxxxxxx:first_sns",
+        "Message": "Glue Job Execution Successful !!"
+      },
+      "End": true
+    },
+    "Failed_Notification": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message.$": "$",
+        "TopicArn": "arn:aws:sns:us-east-1:xxxxxxxxx:first_sns"
+      },
+      "End": true
+    }
+  }
+}
