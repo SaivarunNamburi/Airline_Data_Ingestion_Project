@@ -3,7 +3,7 @@
 ## Overview
 The Airline Data Ingestion project aims to automate the ingestion of daily flights transactional data into a Redshift data warehouse using AWS services. The process begins with data landing in an S3 bucket, which triggers a series of ETL operations orchestrated by Step Functions. Glue is utilized for data extraction, transformation, and loading, ensuring that the data is cleansed, enriched, and ready for analysis.
 
-![Data Architecture](data_architecture.png)
+![Data Architecture](DataArchitecture.png)
 
 ## Steps Involved
 1. **S3 Bucket Creation**: A dedicated S3 bucket is created to store incoming daily flights data, organized in a Hive style partitioning format based on date. This ensures efficient data retrieval and management.
